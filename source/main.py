@@ -27,8 +27,12 @@ from faebryk.exporters.netlist.graph import (
 
 # library imports
 from faebryk.library.core import Component, Interface
-from faebryk.library.library.components import Resistor
-from faebryk.library.library.footprints import SMDTwoPin
+from faebryk.library.library.components import (
+    Resistor,
+    PJ398SM,
+    Capacitor,
+    Potentiometer,
+)
 from faebryk.library.library.interfaces import Power, Electrical
 from faebryk.library.library.parameters import Constant, TBD
 from faebryk.library.trait_impl.component import (
@@ -42,10 +46,6 @@ from faebryk.library.util import get_all_components, times
 from library.library.components import (
     MMBT2N3904,
     MMBT2N3906,
-    PJ398SM,
-    Capacitor,
-    Potentiometer,
-    Transistor,
 )
 
 K = 1000
