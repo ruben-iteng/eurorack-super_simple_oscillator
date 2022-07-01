@@ -1,7 +1,7 @@
 import logging
 from faebryk.library.traits import component
 
-from faebryk.library.traits.component import (
+from faebryk.library.trait_impl.component import (
     contructable_from_component,
     has_defined_footprint,
     has_defined_footprint_pinmap,
@@ -19,12 +19,13 @@ from faebryk.library.core import Component, ComponentTrait, Interface, Parameter
 from faebryk.library.library.components import Resistor
 from faebryk.library.library.interfaces import Electrical, Power
 from faebryk.library.library.parameters import Constant, Range
-from faebryk.library.traits.component import can_bridge_defined
+from faebryk.library.trait_impl.component import can_bridge_defined
 from faebryk.library.util import get_all_interfaces, times, unit_map
 
 from faebryk.libs.exceptions import FaebrykException
 
 import typing
+
 
 class Capacitor(Component):
     def __new__(cls, *args, **kwargs):
@@ -51,7 +52,7 @@ class Capacitor(Component):
         if type(capacitance) is not Constant:
             return
 
-        class _has_type_description(has_type_description):
+        class _has_type_description(has_type_description.impl()):
             @staticmethod
             def get_type_description():
                 capacitance = self.capacitance
@@ -84,6 +85,7 @@ class Transistor(Component):
 class MMBT2N3904(Transistor):
     pass
 
+
 class MMBT2N3906(Transistor):
     pass
 
@@ -106,6 +108,7 @@ class PJ398SM(Component):
         self.IFs.sleeve = Electrical()
         self.IFs.switch = Electrical()
 
+
 class Potentiometer(Component):
     def __new__(cls, *args, **kwargs):
         self = super().__new__(cls, *args, **kwargs)
@@ -124,16 +127,15 @@ class Potentiometer(Component):
         self.IFs.resistors = times(2, Electrical)
         self.IFs.wiper = Electrical()
 
-        self.IFs.wiper.connect_all([
-            self.CMPs.resistors[0].IFs._unnamed[1],
-            self.CMPs.resistors[1].IFs._unnamed[1],
-        ])
+        self.IFs.wiper.connect_all(
+            [
+                self.CMPs.resistors[0].IFs._unnamed[1],
+                self.CMPs.resistors[1].IFs._unnamed[1],
+            ]
+        )
 
-        for i,resistor in enumerate(self.CMPs.resistors):
-            self.IFs.resistors[i].connect(
-                resistor.IFs._unnamed[0]
-            )
-
+        for i, resistor in enumerate(self.CMPs.resistors):
+            self.IFs.resistors[i].connect(resistor.IFs._unnamed[0])
 
     def connect_as_voltage_divider(self, high, low, out):
         self.IFs.resistors[0].connect(high)
