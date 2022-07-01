@@ -16,29 +16,15 @@ from faebryk.library.traits.parameter import is_representable_by_single_value
 logger = logging.getLogger("local_library")
 
 from faebryk.library.core import Component, ComponentTrait, Interface, Parameter
+from faebryk.library.library.components import Resistor
 from faebryk.library.library.interfaces import Electrical, Power
-from faebryk.library.library.parameters import Constant
-from faebryk.library.traits import *
+from faebryk.library.library.parameters import Constant, Range
+from faebryk.library.traits.component import can_bridge_defined
 from faebryk.library.util import get_all_interfaces, times, unit_map
 
 from faebryk.libs.exceptions import FaebrykException
 
 import typing
-
-class Range(Parameter):
-    def __init__(self, value_min: typing.Any, value_max: typing.Any) -> None:
-        super().__init__()
-        self.min = value_min
-        self.max = value_max
-
-    def pick(self, value_to_check: typing.Any):
-        if not self.min <= value_to_check <= self.max:
-            raise FaebrykException(
-                f"Value not in range: {value_to_check} not in [{self.min},{self.max}]"
-            )
-
-        self.add_trait(is_representable_by_single_value(value_to_check))
-
 
 class Capacitor(Component):
     def __new__(cls, *args, **kwargs):
@@ -53,30 +39,11 @@ class Capacitor(Component):
         self.set_capacitance(capacitance)
 
     def _setup_traits(self):
-        class _has_interfaces(has_interfaces):
-            @staticmethod
-            def get_interfaces() -> list[Interface]:
-                return self.interfaces
-
-        class _contructable_from_component(contructable_from_component):
-            @staticmethod
-            def from_component(comp: Component, capacitance: Parameter) -> Capacitor:
-                assert comp.has_trait(has_interfaces)
-                interfaces = comp.get_trait(has_interfaces).get_interfaces()
-                assert len(interfaces) == 2
-                assert len([i for i in interfaces if type(i) is not Electrical]) == 0
-
-                c = Capacitor.__new__(Capacitor)
-                c._setup_capacitance(capacitance)
-                c.interfaces = interfaces
-
-                return c
-
-        self.add_trait(_has_interfaces())
-        self.add_trait(_contructable_from_component())
+        pass
 
     def _setup_interfaces(self):
-        self.interfaces = [Electrical(), Electrical()]
+        self.IFs.add_all(times(2, Electrical))
+        self.add_trait(can_bridge_defined(*self.IFs._unnamed))
 
     def set_capacitance(self, capacitance: Parameter):
         self.capacitance = capacitance
@@ -109,10 +76,9 @@ class Transistor(Component):
         self.add_trait(has_defined_type_description("Transistor"))
 
     def _setup_interfaces(self):
-        self.emitter = Electrical()
-        self.base = Electrical()
-        self.collector = Electrical()
-        self.add_trait(has_defined_interfaces([self.emitter, self.base, self.collector]))
+        self.IFs.emitter = Electrical()
+        self.IFs.base = Electrical()
+        self.IFs.collector = Electrical()
 
 
 class MMBT2N3904(Transistor):
@@ -136,22 +102,40 @@ class PJ398SM(Component):
         self.add_trait(has_defined_type_description("Connector"))
 
     def _setup_interfaces(self):
-        self.tip = Electrical()
-        self.sleeve = Electrical()
-        self.switch = Electrical()
-
+        self.IFs.tip = Electrical()
+        self.IFs.sleeve = Electrical()
+        self.IFs.switch = Electrical()
 
 class Potentiometer(Component):
-    def __new__(cls):
-        self = super().__new__(cls)
-        #self._setup_traits()
+    def __new__(cls, *args, **kwargs):
+        self = super().__new__(cls, *args, **kwargs)
+        self._setup_traits()
         return self
 
-    def __init__(self) -> None:
+    def __init__(self, resistance: Parameter) -> None:
         super().__init__()
-        self._setup_interfaces()
+        self._setup_interfaces(resistance)
 
-    def _setup_interfaces(self):
-        self.resistor0 = Electrical()
-        self.wiper = Electrical()
-        self.resistor1 = Electrical()
+    def _setup_traits(self):
+        pass
+
+    def _setup_interfaces(self, resistance):
+        self.CMPs.resistors = [Resistor(resistance) for _ in range(2)]
+        self.IFs.resistors = times(2, Electrical)
+        self.IFs.wiper = Electrical()
+
+        self.IFs.wiper.connect_all([
+            self.CMPs.resistors[0].IFs._unnamed[1],
+            self.CMPs.resistors[1].IFs._unnamed[1],
+        ])
+
+        for i,resistor in enumerate(self.CMPs.resistors):
+            self.IFs.resistors[i].connect(
+                resistor.IFs._unnamed[0]
+            )
+
+
+    def connect_as_voltage_divider(self, high, low, out):
+        self.IFs.resistors[0].connect(high)
+        self.IFs.resistors[1].connect(low)
+        self.IFs.wiper.connect(out)
