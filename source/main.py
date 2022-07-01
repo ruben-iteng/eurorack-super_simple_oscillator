@@ -32,7 +32,7 @@ from faebryk.library.library.interfaces import Power, Electrical
 from faebryk.library.library.parameters import Constant, TBD
 from faebryk.library.traits.component import (
     has_symmetric_footprint_pinmap,
-    can_bridge_defined
+    can_bridge_defined,
 )
 
 from faebryk.library.util import get_all_components, times
@@ -53,6 +53,7 @@ G = 1000_000_000
 
 n = 0.001 * 0.001 * 0.001
 u = 0.001 * 0.001
+
 
 class EurorackPower(Interface):
     def __init__(self, *args, **kwargs) -> None:
@@ -89,7 +90,7 @@ class EurorackPower(Interface):
         self.IFs.lv.connect(other.IFs.lv)
 
         return self
-            
+
 
 # reverse avalanche oscilator core with lineair to exponential converter (1v/oct) input
 class osc_core(Component):
@@ -102,19 +103,24 @@ class osc_core(Component):
         self.IFs.pitch_in = Electrical()
 
         # components
-        self.CMPs.current_limiting_resistor = Resistor(Constant(1*K))
+        self.CMPs.current_limiting_resistor = Resistor(Constant(1 * K))
         self.CMPs.reverse_avalanche_transistor = MMBT2N3904()
-        self.CMPs.charge_capacitor = Capacitor(Constant(10*n))
+        self.CMPs.charge_capacitor = Capacitor(Constant(10 * n))
 
         # oscillator core: bridge open gate transistor with cap
         #  reverse avalanche has to have cut off leg
         self.CMPs.reverse_avalanche_transistor.IFs.emitter.connect(self.IFs.vcc)
-        self.CMPs.reverse_avalanche_transistor.IFs.collector.connect_via(self.CMPs.charge_capacitor, self.CMPs.reverse_avalanche_transistor.IFs.emitter)
-
+        self.CMPs.reverse_avalanche_transistor.IFs.collector.connect_via(
+            self.CMPs.charge_capacitor,
+            self.CMPs.reverse_avalanche_transistor.IFs.emitter,
+        )
 
         # output transistor collector has oscillating voltage
         self.IFs.wave_out.connect(self.CMPs.reverse_avalanche_transistor.IFs.collector)
-        self.IFs.pitch_in.connect_via(self.CMPs.current_limiting_resistor, self.CMPs.reverse_avalanche_transistor.IFs.collector)
+        self.IFs.pitch_in.connect_via(
+            self.CMPs.current_limiting_resistor,
+            self.CMPs.reverse_avalanche_transistor.IFs.collector,
+        )
 
         self.add_trait(can_bridge_defined(self.IFs.pitch_in, self.IFs.wave_out))
 
@@ -147,13 +153,17 @@ class expo_converter(Component):
         self.add_trait(can_bridge_defined(self.IFs.freq_in, self.IFs.pitch_out))
 
         # function
-        
-        self.CMPs.frequency_offset_current_min_resistor.IFs._unnamed[1].connect(self.CMPs.buffer.IFs.emitter)
+
+        self.CMPs.frequency_offset_current_min_resistor.IFs._unnamed[1].connect(
+            self.CMPs.buffer.IFs.emitter
+        )
         self.CMPs.buffer.IFs.emitter.connect(self.CMPs.current_sink.IFs.base)
         self.CMPs.buffer.IFs.collector.connect(vdd)
         self.CMPs.current_sink.IFs.emitter.connect(gnd)
-        
-        self.CMPs.frequency_offset_trimmer.connect_as_voltage_divider(vcc, gnd, self.CMPs.frequency_offset_current_min_resistor.IFs._unnamed[0])
+
+        self.CMPs.frequency_offset_trimmer.connect_as_voltage_divider(
+            vcc, gnd, self.CMPs.frequency_offset_current_min_resistor.IFs._unnamed[0]
+        )
 
 
 # cv input with frequency control and volt per octave offset inputs
@@ -169,7 +179,7 @@ class cv_input(Component):
         vcc = self.IFs.power.IFs.hv
         gnd = self.IFs.power.IFs.gnd
         vdd = self.IFs.power.IFs.lv
-        
+
         # components
         self.CMPs.input_jack = PJ398SM()
         self.CMPs.frequency_control_potentiometer = Potentiometer(TBD)
@@ -180,16 +190,22 @@ class cv_input(Component):
 
         # connections
         self.CMPs.input_jack.IFs.sleeve.connect(gnd)
-        self.CMPs.voct_min_resistor.IFs._unnamed[1].connect_via(self.CMPs.frequency_control_potentiometer.CMPs.resistors[0], gnd)
+        self.CMPs.voct_min_resistor.IFs._unnamed[1].connect_via(
+            self.CMPs.frequency_control_potentiometer.CMPs.resistors[0], gnd
+        )
         self.CMPs.negative_bias_resistor.IFs._unnamed[1].connect(vdd)
-        self.CMPs.frequency_control_potentiometer.connect_as_voltage_divider(vcc, gnd, self.CMPs.negative_bias_resistor.IFs._unnamed[1])
+        self.CMPs.frequency_control_potentiometer.connect_as_voltage_divider(
+            vcc, gnd, self.CMPs.negative_bias_resistor.IFs._unnamed[1]
+        )
         for i in [
             self.CMPs.negative_bias_resistor.IFs._unnamed[0],
             self.CMPs.freq_devider_mix_resistor.IFs._unnamed[0],
             self.CMPs.voct_min_resistor.IFs._unnamed[0],
             self.IFs.freq_out,
         ]:
-            self.CMPs.input_jack.IFs.tip.connect_via(self.CMPs.input_impendace_resistor, i)
+            self.CMPs.input_jack.IFs.tip.connect_via(
+                self.CMPs.input_impendace_resistor, i
+            )
 
 
 class output_buffer(Component):
@@ -207,19 +223,23 @@ class output_buffer(Component):
 
         # components
         self.CMPs.stages = times(2, MMBT2N3904)
-        self.CMPs.current_limiting_resistor = Resistor(Constant(10*K))
+        self.CMPs.current_limiting_resistor = Resistor(Constant(10 * K))
 
         # in/out
         self.IFs.wave_unbuffered_in.connect(self.CMPs.stages[0].IFs.base)
         self.IFs.wave_buffered_out.connect(self.CMPs.stages[-1].IFs.emitter)
-        self.add_trait(can_bridge_defined(self.IFs.wave_unbuffered_in, self.IFs.wave_buffered_out))
+        self.add_trait(
+            can_bridge_defined(self.IFs.wave_unbuffered_in, self.IFs.wave_buffered_out)
+        )
 
         # function -------
 
         # current path
-        for stage in self.CMPs.stages: 
+        for stage in self.CMPs.stages:
             stage.IFs.collector.connect(vcc)
-        self.CMPs.stages[-1].IFs.emitter.connect_via(self.CMPs.current_limiting_resistor, vdd)
+        self.CMPs.stages[-1].IFs.emitter.connect_via(
+            self.CMPs.current_limiting_resistor, vdd
+        )
 
         # chain
         self.CMPs.stages[0].IFs.emitter.connect(self.CMPs.stages[1].IFs.base)
@@ -237,12 +257,14 @@ class audio_output(Component):
         gnd = self.IFs.gnd
 
         # components
-        self.CMPs.pull_down_resistor = Resistor(Constant(10*K))
-        self.CMPs.ac_coupling_capacitor = Capacitor(Constant(10*u))
+        self.CMPs.pull_down_resistor = Resistor(Constant(10 * K))
+        self.CMPs.ac_coupling_capacitor = Capacitor(Constant(10 * u))
         self.CMPs.jack = PJ398SM()
-        
+
         # I/O
-        self.IFs.wave_buffered_in.connect_via(self.CMPs.ac_coupling_capacitor, self.CMPs.jack.IFs.tip)
+        self.IFs.wave_buffered_in.connect_via(
+            self.CMPs.ac_coupling_capacitor, self.CMPs.jack.IFs.tip
+        )
 
         # function
         self.CMPs.jack.IFs.tip.connect_via(self.CMPs.pull_down_resistor, gnd)
@@ -271,23 +293,22 @@ class Kassutronics_Avalance_VCO(Component):
         self.IFs.power.IFs.gnd.connect(self.CMPs.audio_output.IFs.gnd)
 
         # function
-        self.CMPs.cv_input.IFs.freq_out.connect_via_chain([
+        self.CMPs.cv_input.IFs.freq_out.connect_via_chain(
+            [
                 self.CMPs.expo_converter,
                 self.CMPs.osc_core,
                 self.CMPs.output_buffer,
             ],
-            self.CMPs.audio_output.IFs.wave_buffered_in
+            self.CMPs.audio_output.IFs.wave_buffered_in,
         )
 
 
 G = Kassutronics_Avalance_VCO()
 
-CMPs = [
-    G
-]
+CMPs = [G]
 
 # Hack footprints
-ALL_CMPS=[comp for i in CMPs for comp in get_all_components(i)]+CMPs
+ALL_CMPS = [comp for i in CMPs for comp in get_all_components(i)] + CMPs
 for r in ALL_CMPS:
     r.add_trait(has_symmetric_footprint_pinmap())
 
