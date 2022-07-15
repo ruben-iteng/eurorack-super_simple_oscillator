@@ -317,8 +317,9 @@ t1_ = make_t1_netlist_from_graph(make_graph_from_components(CMPs))
 
 netlist = from_faebryk_t2_netlist(make_t2_netlist_from_t1(t1_))
 
-path = Path("./build/faebryk.net")
-logger.info("Writing Experiment netlist to {}".format(path.absolute()))
+Path("./build/faebryk/").mkdir(parents=True, exist_ok=True)
+path = Path("./build/faebryk/faebryk.net")
+logger.info("Writing Experiment netlist to {}".format(path.resolve()))
 path.write_text(netlist)
 
 from faebryk.exporters.netlist import render_graph
