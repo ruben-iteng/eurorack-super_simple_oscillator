@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+# KiCad
+source/kicad/main/main-backups/*
+source/kicad/main/_autosave-main.kicad_pcb
+source/kicad/main/*cache
+
 # Distribution / packaging
 .Python
 env/
