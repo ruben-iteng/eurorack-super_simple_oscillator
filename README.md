@@ -2,7 +2,7 @@
 
 # eurorack-super_simple_oscillator
 
-<img height=300 title="SUPER SIMPLE OSCILLATOR SCHEMATIC, Look Mum No Computer, 05-2022" src="./eurorack-super_simple_oscillator.png"/>
+<img height=300 title="Super Simple Oscillator PCBA" src="./eurorack-super_simple_oscillator.png"/>
 <br/>
 
 Eurorack modular synthesiser - Super Simple Oscillator
