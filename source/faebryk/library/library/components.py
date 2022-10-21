@@ -204,7 +204,6 @@ class AudioJack2_Ground(Component):
         return
 
     def _setup_interfaces(self):
-        self.IFs.add_all(times(0, Electrical))
         self.IFs.S = Electrical()
         self.IFs.TN = Electrical()
         self.IFs.T = Electrical()
@@ -347,7 +346,6 @@ class _2N3904(Component):
         return
 
     def _setup_interfaces(self):
-        self.IFs.add_all(times(0, Electrical))
         self.IFs.E = Electrical()
         self.IFs.B = Electrical()
         self.IFs.C = Electrical()
@@ -484,7 +482,6 @@ class _2N3906(Component):
         return
 
     def _setup_interfaces(self):
-        self.IFs.add_all(times(0, Electrical))
         self.IFs.E = Electrical()
         self.IFs.B = Electrical()
         self.IFs.C = Electrical()

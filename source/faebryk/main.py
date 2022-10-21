@@ -166,7 +166,7 @@ class expo_converter(Component):
 
         # function
 
-        self.CMPs.frequency_offset_current_min_resistor.IFs.unnamed[1].connect(
+        self.CMPs.frequency_offset_current_min_resistor.IFs.unnamed[0].connect(
             self.CMPs.buffer.IFs.E
         )
         self.CMPs.buffer.IFs.E.connect(self.CMPs.current_sink.IFs.B)
@@ -177,7 +177,7 @@ class expo_converter(Component):
         )
 
         self.CMPs.frequency_offset_trimmer.connect_as_voltage_divider(
-            vcc, gnd, self.CMPs.frequency_offset_current_min_resistor.IFs.unnamed[0]
+            vcc, gnd, self.CMPs.frequency_offset_current_min_resistor.IFs.unnamed[1]
         )
 
         # footprints
@@ -219,19 +219,20 @@ class cv_input(Component):
         # components
         self.CMPs.input_jack = AudioJack2_Ground()
         self.CMPs.frequency_control_potentiometer = Potentiometer(Constant(100 * K))
+        self.CMPs.voct_scale_trimmer = Potentiometer(Constant(1 * K))
         self.CMPs.input_impendace_resistor = Resistor(Constant(100 * K))
         self.CMPs.negative_bias_resistor = Resistor(Constant(220 * K))
-        self.CMPs.voct_min_resistor = Resistor(Constant(1500))
+        self.CMPs.voct_min_resistor = Resistor(Constant(1.5 * K))
         self.CMPs.freq_devider_mix_resistor = Resistor(Constant(150 * K))
 
         # connections
         self.CMPs.input_jack.IFs.S.connect(gnd)
         self.CMPs.voct_min_resistor.IFs.unnamed[1].connect_via(
-            self.CMPs.frequency_control_potentiometer.CMPs.resistors[0], gnd
+            self.CMPs.voct_scale_trimmer.CMPs.resistors[0], gnd
         )
         self.CMPs.negative_bias_resistor.IFs.unnamed[1].connect(vdd)
         self.CMPs.frequency_control_potentiometer.connect_as_voltage_divider(
-            vcc, gnd, self.CMPs.negative_bias_resistor.IFs.unnamed[1]
+            vcc, gnd, self.CMPs.freq_devider_mix_resistor.IFs.unnamed[1]
         )
         for i in [
             self.CMPs.negative_bias_resistor.IFs.unnamed[0],
@@ -253,22 +254,26 @@ class cv_input(Component):
             r.add_trait(has_defined_footprint(SMDTwoPin(SMDTwoPin.Type._0805)))
             r.add_trait(has_symmetric_footprint_pinmap())
 
-        self.CMPs.frequency_control_potentiometer.add_trait(
-            has_defined_footprint(
-                KicadFootprint(
-                    "Potentiometer_THT:Potentiometer_Alpha_RD902F-40-00D_Dual_Vertical_CircularHoles"
+        for r in [
+            self.CMPs.voct_scale_trimmer,
+            self.CMPs.frequency_control_potentiometer,
+        ]:
+            r.add_trait(
+                has_defined_footprint(
+                    KicadFootprint(
+                        "Potentiometer_THT:Potentiometer_Alpha_RD902F-40-00D_Dual_Vertical_CircularHoles"
+                    )
                 )
             )
-        )
-        self.CMPs.frequency_control_potentiometer.add_trait(
-            has_defined_footprint_pinmap(
-                {
-                    1: self.CMPs.frequency_control_potentiometer.IFs.resistors[0],
-                    2: self.CMPs.frequency_control_potentiometer.IFs.wiper,
-                    3: self.CMPs.frequency_control_potentiometer.IFs.resistors[1],
-                }
+            r.add_trait(
+                has_defined_footprint_pinmap(
+                    {
+                        1: r.IFs.resistors[0],
+                        2: r.IFs.wiper,
+                        3: r.IFs.resistors[1],
+                    }
+                )
             )
-        )
 
 
 class output_buffer(Component):
