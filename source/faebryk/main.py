@@ -18,8 +18,10 @@ logger = logging.getLogger("main")
 
 
 # function imports
-from faebryk.exporters.netlist.kicad.netlist_kicad import from_faebryk_t2_netlist
-from faebryk.exporters.netlist import make_t2_netlist_from_t1
+from faebryk.exporters.netlist.kicad.netlist_kicad import (
+    from_faebryk_t2_netlist,
+)
+from faebryk.exporters.netlist.netlist import make_t2_netlist_from_t1
 from faebryk.exporters.netlist.graph import (
     make_graph_from_components,
     make_t1_netlist_from_graph,
@@ -401,6 +403,6 @@ path = Path("./build/faebryk/faebryk.net")
 logger.info("Writing Experiment netlist to {}".format(path.resolve()))
 path.write_text(netlist, encoding="utf-8")
 
-from faebryk.exporters.netlist import render_graph
+from faebryk.exporters.netlist.netlist import render_graph
 
 render_graph(t1_)
