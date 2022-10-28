@@ -2,7 +2,7 @@
 
 # eurorack-super_simple_oscillator
 
-<img height=300 width=300 title="SUPER SIMPLE OSCILLATOR SCHEMATIC, Look Mum No Computer, 05-2022" src="./eurorack-super_simple_oscillator.png"/>
+<img height=300 title="Super Simple Oscillator PCBA" src="./eurorack-super_simple_oscillator.png"/>
 <br/>
 
 Eurorack modular synthesiser - Super Simple Oscillator
@@ -12,6 +12,10 @@ Eurorack modular synthesiser - Super Simple Oscillator
 </div>
 
 ## About
+
+<div align="center">
+<img height=200 title="SUPER SIMPLE OSCILLATOR SCHEMATIC, Look Mum No Computer, 05-2022" src="./eurorack-super_simple_oscillator_lmnc_schematic.png"/>
+</div>
 
 A super simple oscillator module (avalanche vco) in eurorack format based the designs of [Look Mum No Computer](https://www.lookmumnocomputer.com/projects#/simplest-oscillator) and [kassutronics](https://kassu2000.blogspot.com/2018/07/avalance-vco.html).
 This project is build with the opensource EDA [faerbyk](https://github.com/faebryk/faebryk).

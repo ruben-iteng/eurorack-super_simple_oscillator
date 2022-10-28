@@ -1,5 +1,1 @@
-networkx
-numpy
-matplotlib
-black
 faebryk
