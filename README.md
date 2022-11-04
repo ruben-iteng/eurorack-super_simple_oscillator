@@ -18,7 +18,7 @@ Eurorack modular synthesiser - Super Simple Oscillator
 </div>
 
 A super simple oscillator module (avalanche vco) in eurorack format based the designs of [Look Mum No Computer](https://www.lookmumnocomputer.com/projects#/simplest-oscillator) and [kassutronics](https://kassu2000.blogspot.com/2018/07/avalance-vco.html).
-This project is build with the opensource EDA [faerbyk](https://github.com/faebryk/faebryk).
+This project is build with the opensource EDA [faebryk](https://github.com/faebryk/faebryk).
 
 ## What can you do with this project?
 

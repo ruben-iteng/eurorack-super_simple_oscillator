@@ -104,7 +104,7 @@ class EurorackPower(Interface):
         return self
 
 
-# reverse avalanche oscilator core with lineair to exponential converter (1v/oct) input
+# reverse avalanche oscillator core with linear to exponential converter (1v/oct) input
 class osc_core(Component):
     def __init__(self) -> None:
         super().__init__()
