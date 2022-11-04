@@ -53,7 +53,7 @@ from library.library.components import (
     Potentiometer,
     _2N3904,  # MMBT2N3904,
     _2N3906,  # MMBT2N3906,
-    AudioJack2_Ground,
+    AudioJack2_GroundFP,
 )
 
 K = 1000
@@ -68,9 +68,12 @@ class EurorackPower(Interface):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
 
-        self.IFs.hv = Electrical()
-        self.IFs.gnd = Electrical()
-        self.IFs.lv = Electrical()
+        class _IFs(Interface.InterfacesCls()):
+            hv = Electrical()
+            gnd = Electrical()
+            lv = Electrical()
+        
+        self.IFs = _IFs(self)
 
     def connect(self, other: Interface) -> Interface:
         assert type(other) is EurorackPower, "can't connect to non eurorack power"
@@ -107,14 +110,20 @@ class osc_core(Component):
         super().__init__()
 
         # interfaces
-        self.IFs.vcc = Electrical()
-        self.IFs.wave_out = Electrical()
-        self.IFs.pitch_in = Electrical()
+        class _IFs(Component.InterfacesCls()):
+            vcc = Electrical()
+            wave_out = Electrical()
+            pitch_in = Electrical()
+
+        self.IFs = _IFs(self)
 
         # components
-        self.CMPs.current_limiting_resistor = Resistor(Constant(1 * K))
-        self.CMPs.reverse_avalanche_transistor = _2N3904()
-        self.CMPs.charge_capacitor = Capacitor(Constant(10 * n))
+        class _CMPs(Component.ComponentsCls()):
+            current_limiting_resistor = Resistor(Constant(1 * K))
+            reverse_avalanche_transistor = _2N3904()
+            charge_capacitor = Capacitor(Constant(10 * n))
+        
+        self.CMPs = _CMPs(self)
 
         # oscillator core: bridge open gate transistor with cap
         #  reverse avalanche has to have cut off leg
@@ -143,17 +152,21 @@ class expo_converter(Component):
     def __init__(self) -> None:
         super().__init__()
 
-        # interfaces
-        self.IFs.power = EurorackPower()
-        self.IFs.pitch_out = Electrical()
-        self.IFs.freq_in = Electrical()
-        # self.IFs.freq_offset_in = Electrical()
+        class _IFs(Component.InterfacesCls()):
+            power = EurorackPower()
+            pitch_out = Electrical()
+            freq_in = Electrical()
+            # freq_offset_in = Electrical()
 
-        # comps
-        self.CMPs.current_sink = _2N3904()
-        self.CMPs.buffer = _2N3906()
-        self.CMPs.frequency_offset_trimmer = Potentiometer(Constant(10 * K))
-        self.CMPs.frequency_offset_current_min_resistor = Resistor(Constant(100 * K))
+        self.IFs = _IFs(self)
+
+        class _CMPs(Component.ComponentsCls()):
+            current_sink = _2N3904()
+            buffer = _2N3906()
+            frequency_offset_trimmer = Potentiometer(Constant(10 * K))
+            frequency_offset_current_min_resistor = Resistor(Constant(100 * K))
+
+        self.CMPs = _CMPs(self)
 
         # aliases
         vcc = self.IFs.power.IFs.hv
@@ -210,8 +223,11 @@ class cv_input(Component):
         super().__init__()
 
         # interfaces
-        self.IFs.power = EurorackPower()
-        self.IFs.freq_out = Electrical()
+        class _IFs(Component.InterfacesCls()):
+            power = EurorackPower()
+            freq_out = Electrical()
+
+        self.IFs = _IFs(self)
 
         # alliases
         vcc = self.IFs.power.IFs.hv
@@ -219,13 +235,16 @@ class cv_input(Component):
         vdd = self.IFs.power.IFs.lv
 
         # components
-        self.CMPs.input_jack = AudioJack2_Ground()
-        self.CMPs.frequency_control_potentiometer = Potentiometer(Constant(100 * K))
-        self.CMPs.voct_scale_trimmer = Potentiometer(Constant(1 * K))
-        self.CMPs.input_impendace_resistor = Resistor(Constant(100 * K))
-        self.CMPs.negative_bias_resistor = Resistor(Constant(220 * K))
-        self.CMPs.voct_min_resistor = Resistor(Constant(1.5 * K))
-        self.CMPs.freq_devider_mix_resistor = Resistor(Constant(150 * K))
+        class _CMPs(Component.ComponentsCls()):
+            input_jack = AudioJack2_GroundFP()
+            frequency_control_potentiometer = Potentiometer(Constant(100 * K))
+            voct_scale_trimmer = Potentiometer(Constant(1 * K))
+            input_impendace_resistor = Resistor(Constant(100 * K))
+            negative_bias_resistor = Resistor(Constant(220 * K))
+            voct_min_resistor = Resistor(Constant(1.5 * K))
+            freq_devider_mix_resistor = Resistor(Constant(150 * K))
+
+        self.CMPs = _CMPs(self)
 
         # connections
         self.CMPs.input_jack.IFs.S.connect(gnd)
@@ -283,17 +302,23 @@ class output_buffer(Component):
         super().__init__()
 
         # interfaces
-        self.IFs.power = Power()
-        self.IFs.wave_buffered_out = Electrical()
-        self.IFs.wave_unbuffered_in = Electrical()
+        class _IFs(Component.InterfacesCls()):
+            power = Power()
+            wave_buffered_out = Electrical()
+            wave_unbuffered_in = Electrical()
+
+        self.IFs = _IFs(self)
 
         # alliases
         vcc = self.IFs.power.IFs.hv
         vdd = self.IFs.power.IFs.lv
 
         # components
-        self.CMPs.stages = times(2, _2N3904)
-        self.CMPs.current_limiting_resistor = Resistor(Constant(10 * K))
+        class _CMPs(Component.ComponentsCls()):
+            stages = times(2, _2N3904)
+            current_limiting_resistor = Resistor(Constant(10 * K))
+
+        self.CMPs = _CMPs(self)
 
         # in/out
         self.IFs.wave_unbuffered_in.connect(self.CMPs.stages[0].IFs.B)
@@ -323,16 +348,20 @@ class audio_output(Component):
         super().__init__()
 
         # interfaces
-        self.IFs.gnd = Electrical()
-        self.IFs.wave_buffered_in = Electrical()
+        class _IFs(Component.InterfacesCls()):
+            gnd = Electrical()
+            wave_buffered_in = Electrical()
+        self.IFs = _IFs(self)
 
         # aliases
         gnd = self.IFs.gnd
 
         # components
-        self.CMPs.pull_down_resistor = Resistor(Constant(10 * K))
-        self.CMPs.ac_coupling_capacitor = Capacitor(Constant(10 * u))
-        self.CMPs.jack = AudioJack2_Ground()
+        class _CMPs(Component.ComponentsCls()):
+            pull_down_resistor = Resistor(Constant(10 * K))
+            ac_coupling_capacitor = Capacitor(Constant(10 * u))
+            jack = AudioJack2_GroundFP()
+        self.CMPs = _CMPs(self)
 
         # I/O
         self.IFs.wave_buffered_in.connect_via(
@@ -357,14 +386,18 @@ class Kassutronics_Avalance_VCO(Component):
         super().__init__()
 
         # interfaces
-        self.IFs.power = EurorackPower()
+        class _IFs(Component.InterfacesCls()):
+            power = EurorackPower()
+        self.IFs = _IFs(self)
 
         # components
-        self.CMPs.cv_input = cv_input()
-        self.CMPs.expo_converter = expo_converter()
-        self.CMPs.osc_core = osc_core()
-        self.CMPs.output_buffer = output_buffer()
-        self.CMPs.audio_output = audio_output()
+        class _CMPs(Component.ComponentsCls()):
+            cv_input = cv_input()
+            expo_converter = expo_converter()
+            osc_core = osc_core()
+            output_buffer = output_buffer()
+            audio_output = audio_output()
+        self.CMPs = _CMPs(self)
 
         # power
         self.IFs.power.connect(self.CMPs.cv_input.IFs.power)
